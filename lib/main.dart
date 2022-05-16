@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:interval_timer/settings_page.dart';
+import 'package:interval_timer/button_widget.dart';
 
 void main() {
   runApp(const MyApp());
@@ -30,14 +31,6 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  int _counter = 0;
-
-  void _incrementCounter() {
-    setState(() {
-      _counter++;
-    });
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -64,8 +57,18 @@ class _MyHomePageState extends State<MyHomePage> {
       ),
       body: Center(
         child: Column(
+          children: [
+            buildButtons(),
+          ]
         ),
       ),
+    );
+  }
+
+  Widget buildButtons() {
+    return ButtonWidget(
+      text: 'start',
+      onClicked: () {},
     );
   }
 }
