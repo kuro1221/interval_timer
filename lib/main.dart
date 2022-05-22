@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:interval_timer/settings_page.dart';
 import 'package:interval_timer/button_widget.dart';
+import 'dart:async';
+import 'dart:developer';
+
 
 void main() {
   runApp(const MyApp());
@@ -31,6 +34,46 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
+  int actionTimeSec = 5;
+  int restTimeSec = 3;
+  int numberOfRepetitions = 3;
+
+  int currentTimerSec = 0;
+  Map<String, String> timerPhase = {'action' : 'Action', 'rest': 'Rest'};
+  // String currentTimerPhase = 'action';
+  String currentTimerPhase = '';
+
+  Timer? timer;
+  void startTimer() {
+    currentTimerSec = actionTimeSec;
+    currentTimerPhase = timerPhase['action'];
+    timer = Timer.periodic(Duration(seconds: 1),(_) {
+      if (currentTimerSec > 0) {
+        setState(() => currentTimerSec--);
+      } else {
+        stopTimer(reset: false);
+      }
+    });
+  }
+
+  void changeTimerPhase() {
+    if (numberOfRepetitions > 0) {
+      // timerPhase = timerPhase == 'Action'? 'Rest': 'Action';
+    }
+  }
+
+  void stopTimer({bool reset = true}) {
+    if (reset) {
+      resetTimer();
+    }
+
+    timer?.cancel();
+  }
+
+  void resetTimer() => setState(() {
+    currentTimerSec = actionTimeSec;
+  });
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -58,6 +101,8 @@ class _MyHomePageState extends State<MyHomePage> {
       body: Center(
         child: Column(
           children: [
+            // Text(timerPhase),
+            buildTime(),
             buildButtons(),
           ]
         ),
@@ -66,9 +111,43 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   Widget buildButtons() {
-    return ButtonWidget(
-      text: 'start',
-      onClicked: () {},
+    final isRunning = timer == null? false: timer!.isActive;
+    return isRunning?
+      Row(
+        children: [
+          ButtonWidget(
+              color: Colors.white,
+              text: 'Pause',
+              onClicked: () {
+                 stopTimer();
+              }
+          ),
+          ButtonWidget(
+              color: Colors.white,
+              text: 'Cancel',
+              onClicked: () {
+                stopTimer();
+              }
+          ),
+        ],
+      )
+      : ButtonWidget(
+        color: Colors.white,
+        text: 'Start Button',
+        onClicked: () {
+          startTimer();
+        },
+      );
+  }
+
+  Widget buildTime() {
+    return Text(
+      '$currentTimerSec',
+      style: TextStyle(
+        fontWeight: FontWeight.bold,
+        color: Colors.black,
+        fontSize: 60,
+      )
     );
   }
 }
