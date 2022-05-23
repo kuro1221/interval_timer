@@ -47,7 +47,6 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   void startTimer(String phase) {
-    logger.v('タイマースタート');
     //スタート時のみタイマー設定を初期化する
     if (remainingNumberOfTimes == Setting.numberOfRepetitions) setTimer();
     setState(() => currentTimerPhase = Setting.timerPhase[phase]!);
@@ -58,11 +57,16 @@ class _MyHomePageState extends State<MyHomePage> {
       setState(() => currentTimerSec = Setting.restTimeSec);
     }
 
+    print('///タイマースタート');
+    print('///フェーズ：' + currentTimerPhase);
+    print('///残り回数:' + remainingNumberOfTimes.toString());
+
     timer = Timer.periodic(Duration(seconds: 1),(_) {
       if (currentTimerSec > 0) {
         setState(() => currentTimerSec--);
       } else {
         // stopTimer(reset: false);
+        timer?.cancel();
         changeTimerPhase();
       }
     });
@@ -76,7 +80,10 @@ class _MyHomePageState extends State<MyHomePage> {
 
   //残り回数が0か1以上か、タイマーフェーズがアクションかレスとかで処理を変える
   void changeTimerPhase() {
-    if (remainingNumberOfTimes == 0) finishTimer();
+    if (remainingNumberOfTimes == 0) {
+      finishTimer();
+      return;
+    }
 
     if (currentTimerPhase == Setting.timerPhase['action']) {
       setState(() {
@@ -137,6 +144,12 @@ class _MyHomePageState extends State<MyHomePage> {
              style: TextStyle(
                   fontSize: 40,
              )
+            ),
+            Text(
+                '残り回数:$remainingNumberOfTimes',
+                style: TextStyle(
+                  fontSize: 30,
+                )
             ),
             buildTime(),
             buildButtons(),
