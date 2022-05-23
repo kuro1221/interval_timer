@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'dart:developer';
 
 class ButtonWidget extends StatelessWidget {
   final String text;

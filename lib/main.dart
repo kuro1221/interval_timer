@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:interval_timer/settings_page.dart';
 import 'package:interval_timer/button_widget.dart';
+import 'package:interval_timer/configs/setting.dart';
 import 'dart:async';
 import 'dart:developer';
-
+import 'package:logger/logger.dart';
 
 void main() {
   runApp(const MyApp());
@@ -34,31 +35,57 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  int actionTimeSec = 5;
-  int restTimeSec = 3;
-  int numberOfRepetitions = 3;
+  int currentTimerSec = Setting.actionTimeSec;
+  String currentTimerPhase = Setting.timerPhase['ready']!;
+  int remainingNumberOfTimes = Setting.numberOfRepetitions;
 
-  int currentTimerSec = 0;
-  Map<String, String> timerPhase = {'action' : 'Action', 'rest': 'Rest'};
-  // String currentTimerPhase = 'action';
-  String currentTimerPhase = '';
-
+  final logger = Logger();
   Timer? timer;
-  void startTimer() {
-    currentTimerSec = actionTimeSec;
-    currentTimerPhase = timerPhase['action'];
+
+  _MyHomePageState() {
+    setTimer();
+  }
+
+  void startTimer(String phase) {
+    logger.v('タイマースタート');
+    //スタート時のみタイマー設定を初期化する
+    if (remainingNumberOfTimes == Setting.numberOfRepetitions) setTimer();
+    setState(() => currentTimerPhase = Setting.timerPhase[phase]!);
+
+    if (currentTimerPhase == Setting.timerPhase['action']) {
+      setState(() => currentTimerSec = Setting.actionTimeSec);
+    } else {
+      setState(() => currentTimerSec = Setting.restTimeSec);
+    }
+
     timer = Timer.periodic(Duration(seconds: 1),(_) {
       if (currentTimerSec > 0) {
         setState(() => currentTimerSec--);
       } else {
-        stopTimer(reset: false);
+        // stopTimer(reset: false);
+        changeTimerPhase();
       }
     });
   }
 
+  void setTimer() {
+    int currentTimerSec = Setting.actionTimeSec;
+    String currentTimerPhase = Setting.timerPhase['ready']!;
+    int remainingNumberOfTimes = Setting.numberOfRepetitions;
+  }
+
+  //残り回数が0か1以上か、タイマーフェーズがアクションかレスとかで処理を変える
   void changeTimerPhase() {
-    if (numberOfRepetitions > 0) {
-      // timerPhase = timerPhase == 'Action'? 'Rest': 'Action';
+    if (remainingNumberOfTimes == 0) finishTimer();
+
+    if (currentTimerPhase == Setting.timerPhase['action']) {
+      setState(() {
+        currentTimerPhase = Setting.timerPhase['rest']!;
+        remainingNumberOfTimes--;
+      });
+      startTimer('rest');
+    } else {
+      startTimer('action');
     }
   }
 
@@ -70,8 +97,12 @@ class _MyHomePageState extends State<MyHomePage> {
     timer?.cancel();
   }
 
+  void finishTimer() {
+    timer?.cancel();
+  }
+
   void resetTimer() => setState(() {
-    currentTimerSec = actionTimeSec;
+    setState(() => currentTimerSec = Setting.actionTimeSec);
   });
 
   @override
@@ -101,7 +132,12 @@ class _MyHomePageState extends State<MyHomePage> {
       body: Center(
         child: Column(
           children: [
-            // Text(timerPhase),
+            Text(
+            '$currentTimerPhase',
+             style: TextStyle(
+                  fontSize: 40,
+             )
+            ),
             buildTime(),
             buildButtons(),
           ]
@@ -114,7 +150,9 @@ class _MyHomePageState extends State<MyHomePage> {
     final isRunning = timer == null? false: timer!.isActive;
     return isRunning?
       Row(
+        mainAxisAlignment: MainAxisAlignment.center,
         children: [
+          Spacer(),
           ButtonWidget(
               color: Colors.white,
               text: 'Pause',
@@ -122,20 +160,22 @@ class _MyHomePageState extends State<MyHomePage> {
                  stopTimer();
               }
           ),
+          Spacer(),
           ButtonWidget(
               color: Colors.white,
               text: 'Cancel',
               onClicked: () {
-                stopTimer();
+                finishTimer();
               }
           ),
+          Spacer(),
         ],
       )
       : ButtonWidget(
         color: Colors.white,
         text: 'Start Button',
         onClicked: () {
-          startTimer();
+          startTimer('action');
         },
       );
   }
