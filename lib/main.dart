@@ -1,5 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:interval_timer/settings_page.dart';
+import 'package:interval_timer/button_widget.dart';
+import 'package:interval_timer/configs/setting.dart';
+import 'dart:async';
+import 'dart:developer';
+import 'package:logger/logger.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
 
 void main() {
   runApp(const MyApp());
@@ -30,13 +37,83 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  int _counter = 0;
+  int currentTimerSec = Setting.actionTimeSec;
+  String currentTimerPhase = Setting.timerPhase['ready']!;
+  int remainingNumberOfTimes = Setting.numberOfRepetitions;
 
-  void _incrementCounter() {
-    setState(() {
-      _counter++;
+  final logger = Logger();
+  Timer? timer;
+
+  _MyHomePageState() {
+    setTimer();
+  }
+
+  void startTimer(String phase) {
+    final prefs = await SharedPreferences.getInstance();
+    //スタート時のみタイマー設定を初期化する
+    if (remainingNumberOfTimes == Setting.numberOfRepetitions) setTimer();
+    setState(() => currentTimerPhase = Setting.timerPhase[phase]!);
+
+    if (currentTimerPhase == Setting.timerPhase['action']) {
+      setState(() => currentTimerSec = Setting.actionTimeSec);
+    } else {
+      setState(() => currentTimerSec = Setting.restTimeSec);
+    }
+
+    print('///タイマースタート');
+    print('///フェーズ：' + currentTimerPhase);
+    print('///残り回数:' + remainingNumberOfTimes.toString());
+
+    timer = Timer.periodic(Duration(seconds: 1),(_) {
+      if (currentTimerSec > 0) {
+        setState(() => currentTimerSec--);
+      } else {
+        // stopTimer(reset: false);
+        timer?.cancel();
+        changeTimerPhase();
+      }
     });
   }
+
+  void setTimer() {
+    int currentTimerSec = Setting.actionTimeSec;
+    String currentTimerPhase = Setting.timerPhase['ready']!;
+    int remainingNumberOfTimes = Setting.numberOfRepetitions;
+  }
+
+  //残り回数が0か1以上か、タイマーフェーズがアクションかレスとかで処理を変える
+  void changeTimerPhase() {
+    if (remainingNumberOfTimes == 0) {
+      finishTimer();
+      return;
+    }
+
+    if (currentTimerPhase == Setting.timerPhase['action']) {
+      setState(() {
+        currentTimerPhase = Setting.timerPhase['rest']!;
+        remainingNumberOfTimes--;
+      });
+      startTimer('rest');
+    } else {
+      startTimer('action');
+    }
+  }
+
+  void stopTimer({bool reset = true}) {
+    if (reset) {
+      resetTimer();
+    }
+
+    timer?.cancel();
+  }
+
+  void finishTimer() {
+    timer?.cancel();
+  }
+
+  void resetTimer() => setState(() {
+    setState(() => currentTimerSec = Setting.actionTimeSec);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -64,8 +141,106 @@ class _MyHomePageState extends State<MyHomePage> {
       ),
       body: Center(
         child: Column(
+          children: [
+            Text(
+            '$currentTimerPhase',
+             style: TextStyle(
+                  fontSize: 40,
+             )
+            ),
+            Text(
+                '残り回数:$remainingNumberOfTimes',
+                style: TextStyle(
+                  fontSize: 30,
+                )
+            ),
+            buildTime(),
+            buildButtons(),
+          ]
         ),
       ),
+    );
+  }
+
+  Widget buildButtons() {
+    // final isRunning = timer == null? false: timer!.isActive;
+    // if (currentTimerPhase == Setting.timerPhase['ready']) {
+
+    if (currentTimerPhase == Setting.timerPhase['Action'] || currentTimerPhase == Setting.timerPhase['rest']) {
+      return
+        Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Spacer(),
+              ButtonWidget(
+                  color: Colors.white,
+                  text: 'Pause',
+                  onClicked: () {
+                     stopTimer();
+                  }
+              ),
+              Spacer(),
+              ButtonWidget(
+                  color: Colors.white,
+                  text: 'Cancel',
+                  onClicked: () {
+                    finishTimer();
+                  }
+              ),
+              Spacer(),
+            ],
+          );
+    }
+    else {
+      return ButtonWidget(
+          color: Colors.white,
+          text: 'Start Button',
+          onClicked: () {
+            startTimer('action');
+          }
+      );
+    }
+  }
+    // return isRunning?
+    //   Row(
+    //     mainAxisAlignment: MainAxisAlignment.center,
+    //     children: [
+    //       Spacer(),
+    //       ButtonWidget(
+    //           color: Colors.white,
+    //           text: 'Pause',
+    //           onClicked: () {
+    //              stopTimer();
+    //           }
+    //       ),
+    //       Spacer(),
+    //       ButtonWidget(
+    //           color: Colors.white,
+    //           text: 'Cancel',
+    //           onClicked: () {
+    //             finishTimer();
+    //           }
+    //       ),
+    //       Spacer(),
+    //     ],
+    //   )
+    //   : ButtonWidget(
+    //     color: Colors.white,
+    //     text: 'Start Button',
+    //     onClicked: () {
+    //       startTimer('action');
+    //     },
+    //   );
+
+
+  Widget buildTime() {
+    return Text(
+      '$currentTimerSec',
+      style: TextStyle(
+        fontWeight: FontWeight.bold,
+        color: Colors.black,
+        fontSize: 60,
+      )
     );
   }
 }
