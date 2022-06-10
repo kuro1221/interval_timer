@@ -5,6 +5,8 @@ import 'package:interval_timer/configs/setting.dart';
 import 'dart:async';
 import 'dart:developer';
 import 'package:logger/logger.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
 
 void main() {
   runApp(const MyApp());
@@ -47,6 +49,7 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   void startTimer(String phase) {
+    final prefs = await SharedPreferences.getInstance();
     //スタート時のみタイマー設定を初期化する
     if (remainingNumberOfTimes == Setting.numberOfRepetitions) setTimer();
     setState(() => currentTimerPhase = Setting.timerPhase[phase]!);
@@ -160,38 +163,75 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   Widget buildButtons() {
-    final isRunning = timer == null? false: timer!.isActive;
-    return isRunning?
-      Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Spacer(),
-          ButtonWidget(
-              color: Colors.white,
-              text: 'Pause',
-              onClicked: () {
-                 stopTimer();
-              }
-          ),
-          Spacer(),
-          ButtonWidget(
-              color: Colors.white,
-              text: 'Cancel',
-              onClicked: () {
-                finishTimer();
-              }
-          ),
-          Spacer(),
-        ],
-      )
-      : ButtonWidget(
-        color: Colors.white,
-        text: 'Start Button',
-        onClicked: () {
-          startTimer('action');
-        },
+    // final isRunning = timer == null? false: timer!.isActive;
+    // if (currentTimerPhase == Setting.timerPhase['ready']) {
+
+    if (currentTimerPhase == Setting.timerPhase['Action'] || currentTimerPhase == Setting.timerPhase['rest']) {
+      return
+        Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Spacer(),
+              ButtonWidget(
+                  color: Colors.white,
+                  text: 'Pause',
+                  onClicked: () {
+                     stopTimer();
+                  }
+              ),
+              Spacer(),
+              ButtonWidget(
+                  color: Colors.white,
+                  text: 'Cancel',
+                  onClicked: () {
+                    finishTimer();
+                  }
+              ),
+              Spacer(),
+            ],
+          );
+    }
+    else {
+      return ButtonWidget(
+          color: Colors.white,
+          text: 'Start Button',
+          onClicked: () {
+            startTimer('action');
+          }
       );
+    }
   }
+    // return isRunning?
+    //   Row(
+    //     mainAxisAlignment: MainAxisAlignment.center,
+    //     children: [
+    //       Spacer(),
+    //       ButtonWidget(
+    //           color: Colors.white,
+    //           text: 'Pause',
+    //           onClicked: () {
+    //              stopTimer();
+    //           }
+    //       ),
+    //       Spacer(),
+    //       ButtonWidget(
+    //           color: Colors.white,
+    //           text: 'Cancel',
+    //           onClicked: () {
+    //             finishTimer();
+    //           }
+    //       ),
+    //       Spacer(),
+    //     ],
+    //   )
+    //   : ButtonWidget(
+    //     color: Colors.white,
+    //     text: 'Start Button',
+    //     onClicked: () {
+    //       startTimer('action');
+    //     },
+    //   );
+
 
   Widget buildTime() {
     return Text(
