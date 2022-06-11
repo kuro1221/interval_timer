@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:interval_timer/Singleton.dart';
 import 'package:interval_timer/settings_page.dart';
 import 'package:interval_timer/button_widget.dart';
 import 'package:interval_timer/configs/setting.dart';
@@ -6,7 +7,6 @@ import 'dart:async';
 import 'dart:developer';
 import 'package:logger/logger.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-
 
 void main() {
   runApp(const MyApp());
@@ -49,7 +49,13 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   void startTimer(String phase) {
-    final prefs = await SharedPreferences.getInstance();
+    Singleton.getInstance();
+    print(Singleton.getValue());
+    Singleton.setValue();
+    print('セット後');
+    print(Singleton.getValue());
+
+
     //スタート時のみタイマー設定を初期化する
     if (remainingNumberOfTimes == Setting.numberOfRepetitions) setTimer();
     setState(() => currentTimerPhase = Setting.timerPhase[phase]!);
